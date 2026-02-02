@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Be My Valentine 💖</title>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      animation: fadeIn 0.8s ease;
+    }
+    h1 { color: #ff4d6d; }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    button {
+      background: #ff4d6d;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+    .hidden { display: none; }
+    img { width: 150px; margin-top: 15px; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PAGE 1: CREATE LINK -->
+<div class="card" id="page1">
+  <h1>Create Valentine Link 💌</h1>
+  <input id="senderName" placeholder="Your name" />
+  <input id="senderEmail" placeholder="Your email" />
+  <button onclick="generateLink()">Generate Link</button>
+  <br />
+  <button id="copyButton" class="hidden" onclick="copyLink()">Copy Link 💌</button>
+</div>
+
+<!-- PAGE 2: RECEIVER NAME -->
+<div class="card hidden" id="page2">
+  <h1>Hi cutie 💕</h1>
+  <input id="receiverName" placeholder="Your name" />
+  <button onclick="startQuestion()">Continue</button>
+</div>
+
+<!-- PAGE 3: QUESTION -->
+<div class="card hidden" id="page3">
+  <h1 id="questionText"></h1>
+  <img id="mainImg" src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" />
+  <br />
+  <button onclick="sayYes()">Yes 😍</button>
+  <button onclick="sayNo()">No 🙄</button>
+  <p id="begText"></p>
+</div>
+
+<!-- PAGE 4: SUCCESS -->
+<div class="card hidden" id="page4">
+  <h1>Yay! 💖 It's a YES!!! 🎉</h1>
+  <img id="celebrateGif" src="https://media.giphy.com/media/ddHhhUBn25cuQ/giphy.gif" />
+  <audio id="loveSong">
+    <source src="song.mp3" type="audio/mpeg">
+  </audio>
+  <p>Thanks for saying yes! Sending lots of love 💌</p>
+</div>
+
+<script>
+emailjs.init("fLCf7HHi2oaIh-_xZ");
+
+let senderName, senderEmail, receiverName;
+let step = 0;
+
+// Mapping of begging text → specific GIF
+const beggingMap = [
+  { text: "Are you sure? 😢", img: "https://media.giphy.com/media/KEf7gXqvQ8B3SWnUid/giphy.gif" },
+  { text: "Please think again 💔", img: "https://media.giphy.com/media/g4ODNTnpEBrmsghYtD/giphy.gif" },
+  { text: "I’ll buy you chocolate 🍫", img: "https://media.giphy.com/media/3orieTfp1MeFLiBQR2/giphy.gif" },
+  { text: "I’ll cook for you 🍝", img: "https://media.giphy.com/media/43wR1f8QU9KApWKjYt/giphy.gif" },
+  { text: "I’ll spoil you like crazy 😭", img: "https://media.giphy.com/media/3orieTfp1MeFLiBQR2/giphy.gif" }, 
+  { text: "Okay I'm on my knees now 🥺", img: "https://media.giphy.com/media/g4ODNTnpEBrmsghYtD/giphy.gif" }
+];
+
+// Preload all GIFs
+beggingMap.forEach(entry => { let img = new Image(); img.src = entry.img; });
+const celebrateGif = new Image(); celebrateGif.src = "https://media.giphy.com/media/ddHhhUBn25cuQ/giphy.gif";
+
+// Link generation
+function generateLink() {
+  senderName = document.getElementById("senderName").value;
+  senderEmail = document.getElementById("senderEmail").value;
+
+  const link = `${window.location.origin}${window.location.pathname}?from=${encodeURIComponent(senderName)}&email=${encodeURIComponent(senderEmail)}`;
+    
+  const copyBtn = document.getElementById("copyButton");
+  copyBtn.classList.remove("hidden");
+  copyBtn.dataset.link = link;
+
+  alert("Link generated! 💌 Reminder: check your spam folder if email notifications don’t appear immediately.");
+}
+
+function copyLink() {
+  const link = document.getElementById("copyButton").dataset.link;
+  navigator.clipboard.writeText(link).then(() => {
+    alert("Link copied! 💌");
+  });
+}
+
+// Check URL parameters
+const params = new URLSearchParams(window.location.search);
+if (params.get("from")) {
+  senderName = params.get("from");
+  senderEmail = params.get("email");
+  document.getElementById("page1").classList.add("hidden");
+  document.getElementById("page2").classList.remove("hidden");
+}
+
+function startQuestion() {
+  receiverName = document.getElementById("receiverName").value;
+  if (!receiverName) { alert("Please enter your name!"); return; }
+  document.getElementById("page2").classList.add("hidden");
+  document.getElementById("page3").classList.remove("hidden");
+  document.getElementById("questionText").innerText = `${receiverName}, will you be my Valentine? 💖`;
+}
+
+// Say No → show next begging text + GIF
+function sayNo() {
+  if (step < beggingMap.length) {
+    document.getElementById("begText").innerText = beggingMap[step].text;
+    document.getElementById("mainImg").src = beggingMap[step].img;
+    step++;
+  } else {
+    document.getElementById("begText").innerText = "Please say YES! 🥺";
+  }
+}
+
+// Say Yes → play song + show celebration + send email
+function sayYes() {
+  const song = document.getElementById("loveSong");
+  song.volume = 0.3;
+  song.play();
+
+  emailjs.send("service_9kwdlps", "template_yfgqq4k", {
+    to_email: senderEmail,
+    message: `Hello ${senderName},\n\nGreat news! ${receiverName} has accepted your Valentine request 💖. Celebrate the love! 🎉\n\n- Valentine App`
+  }).then(() => console.log("Email sent!"))
+    .catch(err => console.error("Email error:", err));
+
+  document.getElementById("page3").classList.add("hidden");
+  document.getElementById("page4").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
